@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Petroleum and Mining Engineering - Course Storage</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to bottom, #a2c2e8, #ffffff);
+            color: white;
+            padding: 40px;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: black;
+            font-size: 48px;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.7);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: black;
+            font-size: 36px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+
+        .greeting {
+            font-size: 24px;
+            margin-top: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .intro {
+            font-size: 24px;
+            color: black;
+            margin-top: 50px;
+        }
+
+        /* Special font for "Kumkum" */
+        .kumkum {
+            font-family: 'Dancing Script', cursive;
+            font-size: 36px; /* Increased size */
+            color: black;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input, button {
+            margin: 15px;
+            padding: 12px 20px;
+            font-size: 18px;
+            background-color: #2F4F4F;
+            border: 2px solid #888;
+            color: white;
+            border-radius: 10px;
+            transition: 0.3s ease;
+        }
+
+        button:hover, input[type="file"]:hover {
+            background-color: #FFD700;
+            color: black;
+            cursor: pointer;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: #1E90FF;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #FF6347;
+        }
+
+        /* For iPhone & small screens */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 32px;
+            }
+            h2 {
+                font-size: 28px;
+            }
+            input, button {
+                font-size: 16px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Introductory Page -->
+    <div id="introPage">
+        <h1>Welcome to Petroleum and Mining Engineering</h1>
+        <p class="intro">Store and manage your course materials with ease!</p>
+        <button onclick="showUploadPage()">Get Started</button>
+    </div>
+
+    <!-- Upload Course Files Page -->
+    <div id="uploadPage" style="display: none;">
+        <div class="greeting">
+            <p>Welcome, <span class="kumkum">Kumkum</span>! Have a productive day ahead!</p>
+        </div>
+
+        <h2>Upload Your Course Files</h2>
+        <input type="file" id="fileInput" accept="image/*,application/pdf">
+        <button onclick="saveFile()">Upload File</button>
+
+        <h2>Stored Files</h2>
+        <ul id="fileList"></ul>
+    </div>
+
+    <!-- JavaScript Section -->
+    <script>
+        function showUploadPage() {
+            document.getElementById("introPage").style.display = "none";
+            document.getElementById("uploadPage").style.display = "block";
+        }
+
+        // IndexedDB Setup
+        let db;
+        const request = indexedDB.open("CourseStorageDB", 1);
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains("files")) {
+                db.createObjectStore("files", { keyPath: "id", autoIncrement: true });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            displayFiles();
+        };
+
+        function saveFile() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function() {
+                    const transaction = db.transaction("files", "readwrite");
+                    const store = transaction.objectStore("files");
+                    store.add({ name: file.name, data: reader.result, type: file.type });
+
+                    transaction.oncomplete = function() {
+                        displayFiles();
+                        fileInput.value = "";
+                    };
+                };
+            }
+        }
+
+        function displayFiles() {
+            const fileList = document.getElementById("fileList");
+            fileList.innerHTML = "";
+
+            const transaction = db.transaction("files", "readonly");
+            const store = transaction.objectStore("files");
+            const request = store.getAll();
+
+            request.onsuccess = function() {
+                request.result.forEach(file => {
+                    const li = document.createElement("li");
+                    const link = document.createElement("a");
+                    link.href = file.data;
+                    link.textContent = file.name;
+                    link.target = "_blank";
+                    li.appendChild(link);
+                    fileList.appendChild(li);
+                });
+            };
+        }
+    </script>
+
+    <script>
+        // iPhone Safari cache fix
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
+
+</body>
+</html>,
